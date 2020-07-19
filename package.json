@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start:dev": "nodemon --inspect main.js",
+    "start:dev": "nodemon --inspect app.js",
     "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,6 +24,8 @@
   "dependencies": {
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.25",
     "telegraf": "^3.38.0"
   }
 }
