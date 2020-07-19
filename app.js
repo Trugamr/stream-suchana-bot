@@ -1,8 +1,19 @@
 require('dotenv').config()
 
 const mongoose = require('mongoose')
+const express = require('express')
+const passport = require('passport')
+const authRoutes = require('./routes/auth-routes')
 
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
+
+// Passport setup
+require('./auth/passport-setup')
+
+const app = express()
+
+// Middlewares setup
+app.use(passport.initialize())
 
 // Databse Connection
 mongoose
@@ -21,5 +32,19 @@ mongoose
     console.log('Failed to connect to database.', error.message)
   })
 
-// Starting telegram BOT
-bot.launch()
+// Routes setup
+app.use('/auth', authRoutes)
+
+app.get('/', (req, res) => {
+  console.log(req.user)
+  res.json({
+    message: 'This is made for authenticating with twitch.',
+    ...req.query,
+    user: req.user
+  })
+})
+
+const port = PORT || 3000
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`)
+})
