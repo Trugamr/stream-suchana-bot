@@ -1,11 +1,17 @@
 require('dotenv').config()
 
-const mongoose = require('mongoose')
 const express = require('express')
+const mongoose = require('mongoose')
 const passport = require('passport')
 const authRoutes = require('./routes/auth-routes')
 
-const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
+const {
+  SESSION_SECRET,
+  MONGO_DB_URL,
+  MONGO_DB_USERNAME,
+  MONGO_DB_PASSWORD,
+  PORT
+} = process.env
 
 // Passport setup
 require('./auth/passport-setup')

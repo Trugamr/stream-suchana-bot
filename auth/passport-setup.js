@@ -1,5 +1,6 @@
 const axios = require('axios')
 const passport = require('passport')
+const { query } = require('express')
 const OAuth2Strategy = require('passport-oauth').OAuth2Strategy
 
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = process.env
@@ -41,9 +42,10 @@ passport.use(
       tokenURL: 'https://id.twitch.tv/oauth2/token',
       clientID: TWITCH_CLIENT_ID,
       clientSecret: TWITCH_CLIENT_SECRET,
-      callbackURL: '/auth/twitch/callback'
+      callbackURL: '/auth/twitch/callback',
+      passReqToCallback: true
     },
-    (accessToken, refreshToken, profile, done) => {
+    (req, accessToken, refreshToken, profile, done) => {
       profile.accessToken = accessToken
       profile.refreshToken = refreshToken
       done(null, profile)
