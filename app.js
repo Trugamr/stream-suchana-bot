@@ -4,14 +4,9 @@ const express = require('express')
 const mongoose = require('mongoose')
 const passport = require('passport')
 const authRoutes = require('./routes/auth-routes')
+const bot = require('./bot/bot')
 
-const {
-  SESSION_SECRET,
-  MONGO_DB_URL,
-  MONGO_DB_USERNAME,
-  MONGO_DB_PASSWORD,
-  PORT
-} = process.env
+const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
 // Passport setup
 require('./auth/passport-setup')
@@ -42,11 +37,10 @@ mongoose
 app.use('/auth', authRoutes)
 
 app.get('/', (req, res) => {
-  console.log(req.user)
+  console.log(req)
   res.json({
     message: 'This is made for authenticating with twitch.',
-    ...req.query,
-    user: req.user
+    ...req.query
   })
 })
 
@@ -54,3 +48,6 @@ const port = PORT || 3000
 app.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
+
+// Start polling
+bot.launch()

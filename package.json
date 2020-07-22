@@ -29,6 +29,7 @@
     "mongoose": "^5.9.25",
     "passport": "^0.4.1",
     "passport-oauth": "^1.0.0",
-    "telegraf": "^3.38.0"
+    "telegraf": "^3.38.0",
+    "uuid": "^8.2.0"
   }
 }
