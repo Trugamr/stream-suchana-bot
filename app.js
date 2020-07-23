@@ -49,5 +49,13 @@ app.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
 
+// TODO: TESTING, DONT COMMIT
+const Twitch = require('./twitch')
+const twitch = new Twitch({
+  accessToken: 'hp4j09cej8f34dp14yfe63nkjpxdrl',
+  refreshToken: 'qv9u9llw2t65tglapazd32j58w2mpvm7l06k6h3kxf7e4j4yoi'
+})
+twitch.userInfo('moonmoonxxxxxxxxxxxxx')
+
 // Start polling
 bot.launch()

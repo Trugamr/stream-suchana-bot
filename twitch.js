@@ -1,81 +1,92 @@
 const axios = require('axios').default
+const { default: createAuthRefreshInterceptor } = require('axios-auth-refresh')
 
-const BASE_URL = 'https://api.twitch.tv/kraken'
+const User = require('./db/models/user-model')
+
+const BASE_URL = 'https://api.twitch.tv/helix'
+
 const {
   TWITCH_CLIENT_ID,
   TWITCH_CLIENT_SECRET,
   TWITCH_REDIRECT_URI
 } = process.env
 
-// https://id.twitch.tv/oauth2/authorize?client_id=gst0ggrd0rb4esyksurabibbgfi2nv&redirect_uri=http://localhost:3000/auth/twitch/callback&response_type=code&scope=user:read:email+channel_read&state=TG_ID_HERE
-
 class Twitch {
-  code = null
-  scope = null
-  state = null
-  tokenData = {}
-  // tokenData: {
-  //   access_token: '43rxqzz93ummlwhwwu4ke47r3kxihm',
-  //   expires_in: 14680,
-  //   refresh_token: 'et8cwtww7f9c57jdtgmmzlxbvx5fiypqeagac25tp6spq0bwff',
-  //   scope: [ 'user:read:email' ],
-  //   token_type: 'bearer'
-  // }
+  accessToken = null
+  refreshToken = null
+  // axios instance
+  twitch = null
 
-  constructor(options = {}) {
-    const { code, scope, state } = options
-    this.code = code
-    this.scope = scope
-    this.state = state
-  }
+  constructor(tokenData = {}) {
+    const { accessToken, refreshToken } = tokenData
+    this.accessToken = accessToken
+    this.refreshToken = refreshToken
 
-  twitch = axios.create({
-    baseURL: BASE_URL,
-    headers: {
-      'Client-ID': TWITCH_CLIENT_ID,
-      Accept: 'application/vnd.twitchtv.v5+json'
-    }
-  })
+    // Creating custom axios instance with default headers and base url
+    this.twitch = axios.create({
+      baseURL: BASE_URL,
+      headers: {
+        'Client-ID': TWITCH_CLIENT_ID,
+        Accept: 'application/vnd.twitchtv.v5+json'
+      }
+    })
 
-  // Get user access token
-  getAccessToken = () => {
-    return new Promise((resolve, reject) => {
-      axios
-        .post(' https://id.twitch.tv/oauth2/token', null, {
+    // Creating auth refresh logic to automatically refresh auth token on failed (401) req
+    const refreshAuthLogic = failedRequest =>
+      this.twitch
+        .post('https://id.twitch.tv/oauth2/token', null, {
           params: {
-            client_id: TWITCH_CLIENT_ID,
-            code: this.code,
+            grant_type: 'refresh_token',
             client_secret: TWITCH_CLIENT_SECRET,
-            redirect_uri: TWITCH_REDIRECT_URI,
-            grant_type: 'authorization_code'
+            client_id: TWITCH_CLIENT_ID,
+            refresh_token: this.refreshToken
           }
         })
-        .then(response => {
-          if (response.data.access_token) {
-            this.tokenData = response.data
-            console.log(response.data)
-          } else reject({ message: 'Failed to get access token.' })
-          resolve(response.data)
+        .then(async tokenRefreshResponse => {
+          console.log('ACCESS TOKEN REFRESH')
+          const refreshedAccessToken = tokenRefreshResponse.data.access_token
+          // Updating access token in database
+          try {
+            await User.findOneAndUpdate('twitch.refreshToken', {
+              $set: { 'twitch.accessToken': refreshedAccessToken }
+            })
+          } catch (error) {
+            console.log(error)
+          }
+
+          // Adding new access token as header for new request
+          failedRequest.response.config.headers['Authorization'] =
+            'Bearer ' + refreshedAccessToken
+
+          return Promise.resolve()
         })
-        .catch(error => reject(error))
-    })
+
+    createAuthRefreshInterceptor(this.twitch, refreshAuthLogic)
   }
 
-  // Get channel streaming status by channelID
-  // Resolve to stream data if streaming else reject
-  isChannelStreamingById = channelID => {
-    return new Promise((resolve, reject) => {})
-  }
-
-  // Get channels according to search query
-  searchChannels = (searchQuery, limit = 4) => {
-    return new Promise((resolve, reject) => {})
-  }
-
-  // Get streaming status for channel by name
-  // Fuzzy search then select the first result
-  isChannelStreamingByName = channelName => {
-    return new Promise((resolve, reject) => {})
+  // Get user info by twitch username [REQUIRES AUTH]
+  userInfo = async username => {
+    try {
+      const response = await this.twitch({
+        url: '/users',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`
+        },
+        params: {
+          login: username
+        }
+      })
+      const data = response.data
+      const user = data.data[0]
+      if (user) return user
+      else
+        throw {
+          status: 'failed',
+          message: `No users found with username ${username}`
+        }
+    } catch (error) {
+      throw error
+    }
   }
 }
 
