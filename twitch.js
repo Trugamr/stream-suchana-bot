@@ -46,10 +46,14 @@ class Twitch {
           console.log('ACCESS TOKEN REFRESH')
           const refreshedAccessToken = tokenRefreshResponse.data.access_token
           // Updating access token in database
+          // TODO: Switch this to use twitch id instead of refresh token in future
           try {
-            await User.findOneAndUpdate('twitch.refreshToken', {
-              $set: { 'twitch.accessToken': refreshedAccessToken }
-            })
+            await User.findOneAndUpdate(
+              { 'twitch.refreshToken': this.refreshToken },
+              {
+                $set: { 'twitch.accessToken': refreshedAccessToken }
+              }
+            )
           } catch (error) {
             console.log(error)
           }
@@ -59,6 +63,9 @@ class Twitch {
             'Bearer ' + refreshedAccessToken
 
           return Promise.resolve()
+        })
+        .catch(error => {
+          return Promise.reject()
         })
 
     createAuthRefreshInterceptor(this.twitch, refreshAuthLogic)
