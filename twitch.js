@@ -95,6 +95,35 @@ class Twitch {
       throw error
     }
   }
+
+  // Get streaming info for user
+  streamingInfo = async username => {
+    try {
+      const response = await this.twitch({
+        method: 'GET',
+        url: '/streams',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`
+        },
+        params: {
+          user_login: username
+        }
+      })
+
+      if (response.data.data.length) {
+        return {
+          live: true,
+          ...response.data.data[0]
+        }
+      } else {
+        return {
+          live: false
+        }
+      }
+    } catch (error) {
+      throw error
+    }
+  }
 }
 
 module.exports = Twitch

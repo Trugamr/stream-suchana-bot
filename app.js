@@ -8,6 +8,8 @@ const bot = require('./bot/bot')
 
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
+// TODO: Write better replies to user
+
 // Passport setup
 require('./auth/passport-setup')
 
