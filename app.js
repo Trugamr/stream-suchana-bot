@@ -2,8 +2,10 @@ require('dotenv').config()
 
 const express = require('express')
 const mongoose = require('mongoose')
+const bodyParser = require('body-parser');
 const passport = require('passport')
 const authRoutes = require('./routes/auth-routes')
+const notificationsRoutes = require('./routes/notifications-route')
 const bot = require('./bot/bot')
 
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
@@ -16,6 +18,8 @@ require('./auth/passport-setup')
 const app = express()
 
 // Middlewares setup
+// app.use(bodyParser.json())
+app.use(bodyParser())
 app.use(passport.initialize())
 
 // Databse Connection
@@ -37,6 +41,7 @@ mongoose
 
 // Routes setup
 app.use('/auth', authRoutes)
+app.use('/notifications', notificationsRoutes)
 
 app.get('/', (req, res) => {
   console.log(req)

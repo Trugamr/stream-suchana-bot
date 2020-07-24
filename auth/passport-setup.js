@@ -22,7 +22,7 @@ OAuth2Strategy.prototype.userProfile = (accessToken, done) => {
       Accept: 'application/vnd.twitchtv.v5+json',
       Authorization: 'Bearer ' + accessToken
     },
-    url: 'https://api.twitch.tv/helix/users'
+    url: 'https://api.twitch.tv/helix/users',
   }
 
   axios(options).then(response => {

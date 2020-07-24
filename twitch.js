@@ -8,7 +8,8 @@ const BASE_URL = 'https://api.twitch.tv/helix'
 const {
   TWITCH_CLIENT_ID,
   TWITCH_CLIENT_SECRET,
-  TWITCH_REDIRECT_URI
+  TWITCH_REDIRECT_URI,
+  SITE_URL
 } = process.env
 
 class Twitch {
@@ -123,6 +124,32 @@ class Twitch {
     } catch (error) {
       throw error
     }
+  }
+
+  // Subscribe to stream notification
+  subscribeStream = async username => {
+    try {
+      // First get userinfo to confirm streamer exists
+      const streamer = await this.userInfo(username)
+      const { id, login } = streamer
+      // TODO
+      // Check if someone has already subscribed to this streamer in subscriptions collection
+      // If yes then add streamer username and id to user subscriptions array
+      // If no then subscribe to notifications and add it to subcriptions collection and then to user subscriptions array
+    } catch (error) {
+      throw error
+    }
+
+    // this.twitch({
+    //   method: 'POST',
+    //   data: {
+    //     'hub.callback': `${SITE_URL}/notifications/stream`,
+    //     'hub.mode': 'subscribe',
+    //     'hub.topic': `https://api.twitch.tv/helix/streams?user_login=${username}`,
+    //     // 2
+    //     'hub.lease_seconds': 172800
+    //   }
+    // })
   }
 }
 

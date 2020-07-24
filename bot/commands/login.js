@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid')
 const User = require('../../db/models/user-model')
 
+const { SITE_URL } = process.env
+
 // Returns random session identifier and date when session expires
 // Default valid session interval 300 seconds
 const getSession = (expiresIn = 300) => {
@@ -57,7 +59,7 @@ const loginCommand = async (ctx, next) => {
   ctx.reply(
     `
 *Authenticate using Twitch*
-http://localhost:3000/auth/twitch?session=${session.identifier}
+${SITE_URL}/auth/twitch?session=${session.identifier}
 `,
     { parse_mode: 'markdown' }
   )
