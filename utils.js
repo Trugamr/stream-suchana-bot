@@ -21,5 +21,5 @@ exports.getHoursMin = string => {
   minutes -= hours * 60
   return `${hours}${hours > 1 ? 'hrs' : 'hr'} ${minutes}${
     minutes > 1 ? 'mins' : 'min'
-  } `
+  }`
 }

@@ -18,7 +18,7 @@ module.exports = async ctx => {
     const { title, viewer_count, user_name, started_at } = stream
     const message = `
 Title: *${title}*
-Started streaming *${getHoursMin(started_at)} ago*
+Started streaming *${getHoursMin(started_at)}* ago
 
 Viewers: *${addSeprator(viewer_count.toString())}*
 
