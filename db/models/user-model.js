@@ -21,9 +21,7 @@ const userSchema = new Schema({
     refreshToken: String,
     code: String,
     scope: String
-  },
-  // Notification subscriptions
-  twitchSubscriptions: "array"
+  }
 })
 
 const User = mongoose.model('user', userSchema)

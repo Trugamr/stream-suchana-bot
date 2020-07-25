@@ -144,8 +144,6 @@ class Twitch {
       const { id, login } = streamer
       // TODO
       // Check if someone has already subscribed to this streamer in subscriptions collection
-      // If yes then add streamer username and id to user subscriptions array
-      // If no then subscribe to notifications and add it to subcriptions collection and then to user subscriptions array
     } catch (error) {
       throw error
     }

@@ -12,7 +12,6 @@ const Twitch = require('./twitch')
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
 // TODO: Write better replies to user
-// TODO: If refreshToken doesn't work remove twitch info for user as they have deauthorized from the app
 // TODO: Maintain streamers collection and users which are subscribed to streamer
 // TODO: Get webhook subscriptions and refresh them is they are about to expire, use token of any of the subscribed users
 
