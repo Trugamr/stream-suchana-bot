@@ -19,7 +19,6 @@ module.exports = async ctx => {
     const message = `
 Title: *${title}*
 Started streaming *${getHoursMin(started_at)}* ago
-
 Viewers: *${addSeprator(viewer_count.toString())}*
 
 [${user_name} ](https://twitch.tv/${user_name})`

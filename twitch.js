@@ -136,30 +136,6 @@ class Twitch {
     }
   }
 
-  // Subscribe to stream notification
-  subscribeStream = async username => {
-    try {
-      // First get userinfo to confirm streamer exists
-      const streamer = await this.userInfo(username)
-      const { id, login } = streamer
-      // TODO
-      // Check if someone has already subscribed to this streamer in subscriptions collection
-    } catch (error) {
-      throw error
-    }
-
-    // this.twitch({
-    //   method: 'POST',
-    //   data: {
-    //     'hub.callback': `${SITE_URL}/notifications/stream`,
-    //     'hub.mode': 'subscribe',
-    //     'hub.topic': `https://api.twitch.tv/helix/streams?user_login=${username}`,
-    //     // 2
-    //     'hub.lease_seconds': 172800
-    //   }
-    // })
-  }
-
   // Get app access token, diff from user access token
   // Needed to check webhook subscriptions
   getAppToken = async () => {
@@ -210,14 +186,14 @@ class Twitch {
           'hub.callback': `${SITE_URL}/notifications/stream/${streamerId}`,
           'hub.mode': 'subscribe',
           'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
-          'hub.lease_seconds': 108000
+          'hub.lease_seconds': 36000
         },
         headers: {
           'Client-ID': TWITCH_CLIENT_ID,
           Authorization: `Bearer ${this.accessToken}`
         }
       })
-      console.log(response)
+      return response
     } catch (error) {
       throw error
     }

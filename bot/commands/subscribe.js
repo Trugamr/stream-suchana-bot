@@ -3,11 +3,6 @@ const User = require('../../db/models/user-model')
 const Streamer = require('../../db/models/streamer-model')
 const { getArgs } = require('../../utils')
 
-// TODO: Verify twitch username
-// TODO: Add twitch streamer to streamers collection
-// TODO: Subscribe to webhook
-// TODO: Add mongo document id of user to twitch streamer
-
 exports.subscribeCommand = async (ctx, next) => {
   const { accessToken, refreshToken } = ctx.state
   const twitch = new Twitch({ accessToken, refreshToken })
@@ -24,6 +19,11 @@ exports.subscribeCommand = async (ctx, next) => {
     const currentStreamer = await Streamer.findOne({
       streamerId: streamerInfo.id
     })
+
+    // Subscribe to webhook
+    const response = await twitch.subscribeToStreamer(streamerInfo.id)
+    if (!response.status == 202)
+      return ctx.reply(`Failed to subscribe to ${streamerInfo.display_name}`)
 
     // Streamer already exists in db, add document id of user along with their telegram chat id
     if (currentStreamer) {
@@ -57,6 +57,10 @@ exports.subscribeCommand = async (ctx, next) => {
 
       await newStreamer.save()
     }
+
+    ctx.reply(
+      `We'll let you know whenever ${streamerInfo.display_name} starts streaming`
+    )
   } catch (error) {
     console.log(error)
     ctx.reply(`Failed to subscribe to ${args[0]}.`)
