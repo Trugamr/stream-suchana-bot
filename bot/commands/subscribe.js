@@ -66,3 +66,41 @@ exports.subscribeCommand = async (ctx, next) => {
     ctx.reply(`Failed to subscribe to ${args[0]}.`)
   }
 }
+
+// TODO: When user unsubs if subscribers are empty unsub webhook for streamer also
+exports.unsubscribeCommand = async (ctx, next) => {
+  const { accessToken, refreshToken } = ctx.state
+  const twitch = new Twitch({ accessToken, refreshToken })
+  const args = getArgs(ctx.message.text)
+  if (!args.length)
+    return ctx.reply(
+      'You need to provide username of streamer you want to subscribe to.'
+    )
+
+  try {
+    const streamerInfo = await twitch.userInfo(args[0])
+    // TODO: Find better parameter to base pull on instead of telegramChatId
+    const removeSubscription = await Streamer.updateOne(
+      { streamerId: streamerInfo.id },
+      {
+        $pull: {
+          subscribers: {
+            telegramChatId: ctx.from.id
+          }
+        }
+      }
+    )
+
+    let message = ''
+    console.log(removeSubscription)
+    if (removeSubscription.nModified) {
+      message = `You'll no longer recieve notification when ${streamerInfo.display_name} comes online`
+    } else {
+      message = `You are already unsubscribed from ${streamerInfo.display_name}`
+    }
+    ctx.reply(message)
+  } catch (error) {
+    ctx.reply('Failed to unsubscribe')
+    console.log(error)
+  }
+}

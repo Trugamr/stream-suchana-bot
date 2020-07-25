@@ -17,6 +17,7 @@ class Twitch {
   refreshToken = null
   // axios instance
   twitch = null
+  twitchApp = null
 
   constructor(tokenData = {}) {
     const { accessToken, refreshToken } = tokenData
@@ -33,6 +34,7 @@ class Twitch {
     })
 
     // Creating auth refresh logic to automatically refresh auth token on failed (401) req
+    // For user tokens
     const refreshAuthLogic = failedRequest =>
       this.twitch
         .post('https://id.twitch.tv/oauth2/token', null, {
@@ -80,6 +82,44 @@ class Twitch {
         })
 
     createAuthRefreshInterceptor(this.twitch, refreshAuthLogic)
+
+    // Creating axios instance for requests using app access token
+    // TODO: Save access token in db so it wont be requested everytime
+    this.twitchApp = axios.create({
+      baseURL: 'https://api.twitch.tv/helix/webhooks/subscriptions',
+      headers: {
+        'Client-ID': 'gst0ggrd0rb4esyksurabibbgfi2nv',
+        Authorization: 'Bearer XXXXXXXXXXXXXXXXXXXXX'
+      }
+    })
+
+    // Creating auth refresh logic to automatically refresh auth token on failed (401) req
+    // For user tokens
+    const refreshAppAuthLogic = failedRequest =>
+      this.twitchApp
+        .post('https://id.twitch.tv/oauth2/token', null, {
+          params: {
+            grant_type: 'client_credentials',
+            client_secret: TWITCH_CLIENT_SECRET,
+            client_id: TWITCH_CLIENT_ID
+          }
+        })
+        .then(async tokenRefreshResponse => {
+          console.log('APP ACCESS TOKEN REFRESH')
+          const { access_token } = tokenRefreshResponse.data
+
+          // Adding new app access token as header for new request
+          failedRequest.response.config.headers['Authorization'] =
+            'Bearer ' + access_token
+
+          return Promise.resolve()
+        })
+        .catch(error => {
+          console.log(error)
+          return Promise.reject()
+        })
+
+    createAuthRefreshInterceptor(this.twitchApp, refreshAppAuthLogic)
   }
 
   // Get user info by twitch username [REQUIRES AUTH]
@@ -136,38 +176,13 @@ class Twitch {
     }
   }
 
-  // Get app access token, diff from user access token
-  // Needed to check webhook subscriptions
-  getAppToken = async () => {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: 'https://id.twitch.tv/oauth2/token',
-        params: {
-          client_id: TWITCH_CLIENT_ID,
-          client_secret: TWITCH_CLIENT_SECRET,
-          grant_type: 'client_credentials'
-        }
-      })
-
-      return response.data
-    } catch (error) {
-      throw error
-    }
-  }
-
   // Get webhook subscriptions
   // TODO: save  token in db, if req fails then only refresh token
   getWebhookSubscriptions = async () => {
     try {
-      const { access_token } = await this.getAppToken()
-      const response = await axios({
+      const response = await this.twitchApp({
         method: 'GET',
-        url: 'https://api.twitch.tv/helix/webhooks/subscriptions',
-        headers: {
-          'Client-ID': TWITCH_CLIENT_ID,
-          Authorization: `Bearer ${access_token} `
-        }
+        url: 'https://api.twitch.tv/helix/webhooks/subscriptions'
       })
       return response.data
     } catch (error) {
@@ -179,7 +194,7 @@ class Twitch {
   // Streamer id needs to be verified before
   subscribeToStreamer = async streamerId => {
     try {
-      const response = await this.twitch({
+      const response = await this.twitchApp({
         method: 'POST',
         url: 'https://api.twitch.tv/helix/webhooks/hub',
         data: {
@@ -187,10 +202,24 @@ class Twitch {
           'hub.mode': 'subscribe',
           'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
           'hub.lease_seconds': 36000
-        },
-        headers: {
-          'Client-ID': TWITCH_CLIENT_ID,
-          Authorization: `Bearer ${this.accessToken}`
+        }
+      })
+      return response
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Unsubscribe to webhook in case no one is subscribed to streamer anymore
+  unsubscribeToStreamer = async streamerId => {
+    try {
+      const response = await this.twitchApp({
+        method: 'POST',
+        url: 'https://api.twitch.tv/helix/webhooks/hub',
+        data: {
+          'hub.callback': `${SITE_URL}/notifications/stream/${streamerId}`,
+          'hub.mode': 'unsubscribe',
+          'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`
         }
       })
       return response

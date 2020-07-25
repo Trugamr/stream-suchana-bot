@@ -12,8 +12,8 @@ const Twitch = require('./twitch')
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
 // TODO: Write better replies to user
-// TODO: Maintain streamers collection and users which are subscribed to streamer
-// TODO: Get webhook subscriptions and refresh them is they are about to expire, use token of any of the subscribed users
+// TODO: Get streamers, check if they have any subscribers refresh webhook
+// TODO: Find a way to delte subscription if they have disconnected their twitch
 
 // Passport setup
 require('./auth/passport-setup')
@@ -59,14 +59,11 @@ app.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
 
-const twitch = new Twitch({
-  accessToken: 'f8fk0vrg0dmt7gz9xcf2ls35qcj9b2x',
-  refreshToken: 'us8m32pnrkr3alizgdvvbj6vwookbb8v1yolj3ws8au0u8dq8z'
-})
-// twitch
-//   .subscribeToStreamer(112603247)
-//   .then(data => console.log(data))
-//   .catch(error => console.log(error))
+const twitch = new Twitch()
+twitch
+  .getWebhookSubscriptions()
+  .then(data => console.log(data))
+  .catch(error => console.log(error))
 
 // Start polling
 bot.launch()

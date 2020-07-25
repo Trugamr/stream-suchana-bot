@@ -7,13 +7,13 @@ const { TELEGRAM_BOT_TOKEN } = process.env
 const startCommand = require('./commands/start')
 const loginCommand = require('./commands/login')
 const streamingCommand = require('./commands/streaming')
-const { subscribeCommand } = require('./commands/subscribe')
+const { subscribeCommand, unsubscribeCommand } = require('./commands/subscribe')
 const User = require('../db/models/user-model')
 
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN)
 
 // Array of commands that needs twitch authentication
-const needAuth = ['streaming', 'sub', 'subscribe']
+const needAuth = ['streaming', 'sub', 'subscribe', 'unsub', 'unsubscribe']
 
 // Middlewares setup
 bot.command(needAuth, async (ctx, next) => {
@@ -44,5 +44,6 @@ bot.start(startCommand)
 bot.command('login', loginCommand)
 bot.command('streaming', streamingCommand)
 bot.command(['sub', 'subscribe'], subscribeCommand)
+bot.command(['unsub', 'unsubscribe'], unsubscribeCommand)
 
 module.exports = bot
