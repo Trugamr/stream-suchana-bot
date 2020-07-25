@@ -66,6 +66,16 @@ class Twitch {
           return Promise.resolve()
         })
         .catch(error => {
+          console.log(
+            'REFRESH TOKEN IS INVALID, REMOVING TWITCH INFO FROM USER PROFILE'
+          )
+          User.findOneAndUpdate(
+            { 'twitch.refreshToken': this.refreshToken },
+            { $unset: { twitch: '' } }
+          )
+            .then(() => console.log('REMOVED TWITCH INFO FOR USER'))
+            .catch(error => console.log(error))
+
           return Promise.reject()
         })
 
@@ -150,6 +160,69 @@ class Twitch {
     //     'hub.lease_seconds': 172800
     //   }
     // })
+  }
+
+  // Get app access token, diff from user access token
+  // Needed to check webhook subscriptions
+  getAppToken = async () => {
+    try {
+      const response = await axios({
+        method: 'POST',
+        url: 'https://id.twitch.tv/oauth2/token',
+        params: {
+          client_id: TWITCH_CLIENT_ID,
+          client_secret: TWITCH_CLIENT_SECRET,
+          grant_type: 'client_credentials'
+        }
+      })
+
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Get webhook subscriptions
+  // TODO: save  token in db, if req fails then only refresh token
+  getWebhookSubscriptions = async () => {
+    try {
+      const { access_token } = await this.getAppToken()
+      const response = await axios({
+        method: 'GET',
+        url: 'https://api.twitch.tv/helix/webhooks/subscriptions',
+        headers: {
+          'Client-ID': TWITCH_CLIENT_ID,
+          Authorization: `Bearer ${access_token} `
+        }
+      })
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Subscribe to streamer status using streamer user_id
+  // Streamer id needs to be verified before
+  subscribeToStreamer = async streamerId => {
+    try {
+      const response = await this.twitch({
+        method: 'POST',
+        url: 'https://api.twitch.tv/helix/webhooks/hub',
+        data: {
+          'hub.callback': `${SITE_URL}/notifications/stream/${streamerId}`,
+          'hub.mode': 'subscribe',
+          'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
+          'hub.lease_seconds': 108000
+        },
+        headers: {
+          'Client-ID': TWITCH_CLIENT_ID,
+          Authorization: `Bearer ${this.accessToken}`
+        }
+      })
+      console.log(response)
+    } catch (error) {
+      throw error
+    }
   }
 }
 
