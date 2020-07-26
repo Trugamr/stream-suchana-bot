@@ -1,4 +1,5 @@
 const axios = require('axios').default
+const rateLimit = require('axios-rate-limit')
 const { default: createAuthRefreshInterceptor } = require('axios-auth-refresh')
 
 const User = require('./db/models/user-model')
@@ -227,6 +228,41 @@ class Twitch {
       throw error
     }
   }
+
+  // Unsubscribe from all webhooks
+  unsubscribeFromAllWebhooks = async () => {
+    // Max requests sent at a single time 5 after that every request is sent after 200ms
+    const rateLimitedAxios = rateLimit(this.twitchApp, {
+      maxRequests: 5,
+      perMilliseconds: 200
+    })
+
+    try {
+      // Get all subscriptions
+      const subscriptions = await this.getWebhookSubscriptions()
+      subscriptions.data.forEach(async subscription => {
+        const { topic, callback, expires_at } = subscription
+        const response = await rateLimitedAxios({
+          method: 'POST',
+          url: 'https://api.twitch.tv/helix/webhooks/hub',
+          data: {
+            'hub.topic': topic,
+            'hub.mode': 'unsubscribe',
+            'hub.callback': callback
+          }
+        })
+
+        console.log(response)
+      })
+
+      console.log(subscriptions)
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Refresh All Webhooks
+  refreshWebhooksSubscriptions = () => {}
 }
 
 module.exports = Twitch

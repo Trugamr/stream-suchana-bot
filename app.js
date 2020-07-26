@@ -60,10 +60,7 @@ app.listen(port, () => {
 })
 
 const twitch = new Twitch()
-twitch
-  .getWebhookSubscriptions()
-  .then(data => console.log(data))
-  .catch(error => console.log(error))
+// twitch.unsubscribeFromAllWebhooks()
 
 // Start polling
 bot.launch()
