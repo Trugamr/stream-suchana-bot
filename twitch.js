@@ -3,6 +3,8 @@ const rateLimit = require('axios-rate-limit')
 const { default: createAuthRefreshInterceptor } = require('axios-auth-refresh')
 
 const User = require('./db/models/user-model')
+const Streamer = require('./db/models/streamer-model')
+const AppData = require('./db/models/appData-model')
 
 const BASE_URL = 'https://api.twitch.tv/helix'
 
@@ -14,6 +16,7 @@ const {
 } = process.env
 
 class Twitch {
+  appAccessToken = null
   accessToken = null
   refreshToken = null
   // axios instance
@@ -21,7 +24,8 @@ class Twitch {
   twitchApp = null
 
   constructor(tokenData = {}) {
-    const { accessToken, refreshToken } = tokenData
+    const { appAccessToken, accessToken, refreshToken } = tokenData
+    this.appAccessToken = appAccessToken
     this.accessToken = accessToken
     this.refreshToken = refreshToken
 
@@ -89,8 +93,8 @@ class Twitch {
     this.twitchApp = axios.create({
       baseURL: 'https://api.twitch.tv/helix/webhooks/subscriptions',
       headers: {
-        'Client-ID': 'gst0ggrd0rb4esyksurabibbgfi2nv',
-        Authorization: 'Bearer XXXXXXXXXXXXXXXXXXXXX'
+        'Client-ID': TWITCH_CLIENT_ID,
+        Authorization: `Bearer ${this.appAccessToken}`
       }
     })
 
@@ -106,8 +110,27 @@ class Twitch {
           }
         })
         .then(async tokenRefreshResponse => {
-          console.log('APP ACCESS TOKEN REFRESH')
+          console.log('APP ACCESS TOKEN REFRESH', tokenRefreshResponse.data)
           const { access_token } = tokenRefreshResponse.data
+
+          this.appAccessToken = access_token
+          // TODO: saving but not using anywhere
+          // const appData = await AppData.findOne({ _id: 'app_data' })
+          // if (!appData) {
+          //   const newAppData = new AppData({
+          //     _id: 'app_data',
+          //     appAccessToken: access_token
+          //   })
+          //   await newAppData.save()
+          // } else {
+          //   await AppData.updateOne(
+          //     { _id: 'app_data' },
+          //     {
+          //       _id: 'app_data',
+          //       appAccessToken: access_token
+          //     }
+          //   )
+          // }
 
           // Adding new app access token as header for new request
           failedRequest.response.config.headers['Authorization'] =
@@ -229,40 +252,104 @@ class Twitch {
     }
   }
 
+  // Get app access token, diff from user access token
+  getAppToken = async () => {
+    try {
+      const response = await axios({
+        method: 'POST',
+        url: 'https://id.twitch.tv/oauth2/token',
+        params: {
+          client_id: TWITCH_CLIENT_ID,
+          client_secret: TWITCH_CLIENT_SECRET,
+          grant_type: 'client_credentials'
+        }
+      })
+
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  }
+
   // Unsubscribe from all webhooks
   unsubscribeFromAllWebhooks = async () => {
-    // Max requests sent at a single time 5 after that every request is sent after 200ms
+    // Max requests sent at a single time 1 after that every request is sent after 1000ms
     const rateLimitedAxios = rateLimit(this.twitchApp, {
-      maxRequests: 5,
-      perMilliseconds: 200
+      maxRequests: 1,
+      perMilliseconds: 1000
     })
 
     try {
+      // Get app access token, axios interceptor is not working for multiple failed requests
+      const { access_token } = await this.getAppToken()
+
       // Get all subscriptions
       const subscriptions = await this.getWebhookSubscriptions()
-      subscriptions.data.forEach(async subscription => {
+      const responses = subscriptions.data.map(subscription => {
         const { topic, callback, expires_at } = subscription
-        const response = await rateLimitedAxios({
+        return rateLimitedAxios({
           method: 'POST',
           url: 'https://api.twitch.tv/helix/webhooks/hub',
+          headers: { Authorization: `Bearer ${access_token}` },
           data: {
             'hub.topic': topic,
             'hub.mode': 'unsubscribe',
             'hub.callback': callback
           }
         })
-
-        console.log(response)
       })
 
-      console.log(subscriptions)
+      await Promise.all(responses)
+      return {
+        status: 'success',
+        message: 'Unsubscribed from all subscriptions'
+      }
     } catch (error) {
       throw error
     }
   }
 
   // Refresh All Webhooks
-  refreshWebhooksSubscriptions = () => {}
+  refreshWebhooksSubscriptions = async () => {
+    const rateLimitedAxios = rateLimit(this.twitchApp, {
+      maxRequests: 1,
+      perMilliseconds: 1000
+    })
+
+    try {
+      // Get app access token, axios interceptor is not working for multiple failed requests
+      const { access_token } = await this.getAppToken()
+      console.log(access_token)
+
+      // Get all streamers from db that have atleast 1 subscriber
+      const streamers = await Streamer.find({
+        // Returns streamers with atlease 1 subscriber
+        'subscribers.0': { $exists: true }
+      })
+      const responses = streamers.map(streamer => {
+        const { streamerId } = streamer
+        return rateLimitedAxios({
+          method: 'POST',
+          url: 'https://api.twitch.tv/helix/webhooks/hub',
+          headers: { Authorization: `Bearer ${access_token}` },
+          data: {
+            'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
+            'hub.callback': `${SITE_URL}/notifications/stream/${streamerId} `,
+            'hub.mode': 'subscribe',
+            'hub.lease_seconds': 86400
+          }
+        })
+      })
+
+      await Promise.all(responses)
+      return {
+        status: 'success',
+        message: 'Refreshed all subscriptions'
+      }
+    } catch (error) {
+      throw error
+    }
+  }
 }
 
 module.exports = Twitch

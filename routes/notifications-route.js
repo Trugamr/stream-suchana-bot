@@ -17,7 +17,7 @@ const router = express.Router()
 // Gets request from subscribed webhook when stream's state is changed
 // TODO: Verify integrity of notification
 router.get('/stream/:user_id', (req, res) => {
-  console.log('[GET] GOT CHALLENGE', req)
+  console.log('[GET] GOT CHALLENGE')
   // Echo back challenge token in plain text
   res.send(req.query['hub.challenge'])
 })
