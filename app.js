@@ -13,10 +13,9 @@ const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
 // TODO: Write better replies to user
 // TODO: Get streamers, check if they have any subscribers refresh webhook
-// TODO: Find a way to delte subscription if they have disconnected their twitch
+// TODO: Find a way to delete subscription if they have disconnected their twitch
 // TODO: Only subscribe webhook when creating a new streamer entry
 // TODO: Verify notification payloads
-// TODO: Prevent duplicate notifications
 
 // Passport setup
 require('./auth/passport-setup')
@@ -57,6 +56,9 @@ app.get('/', (req, res) => {
   })
 })
 
+// Node cron jobs setup
+require('./cron-jobs')
+
 const port = PORT || 3000
 app.listen(port, () => {
   console.log(`Listening on port ${port}`)
@@ -71,7 +73,7 @@ const twitch = new Twitch()
 //   .refreshWebhooksSubscriptions()
 //   .then(data => console.log(data))
 //   .catch(error => console.log(error))
-twitch.getWebhookSubscriptions().then(_ => console.log(_))
+// twitch.getWebhookSubscriptions().then(_ => console.log(_))
 
 // Start polling
 bot.launch()
