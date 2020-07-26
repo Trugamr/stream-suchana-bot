@@ -3,6 +3,7 @@ const axios = require('axios')
 const rateLimit = require('axios-rate-limit')
 const Streamer = require('../db/models/streamer-model')
 const { getHoursMin, addSeprator } = require('../utils')
+const AppData = require('../db/models/appData-model')
 
 const { TELEGRAM_BOT_TOKEN } = process.env
 
@@ -31,6 +32,7 @@ router.post('/stream/:user_id', async (req, res) => {
   console.log('[POST] GOT NOTIFIED', req)
   try {
     const {
+      id,
       started_at,
       thumbnail_url,
       title,
@@ -49,11 +51,31 @@ Viewers: *${addSeprator(viewer_count.toString())}*
 
 [${user_name} ](https://twitch.tv/${user_name})
 `
+    const appData = await AppData.findOne({ _id: 'app_data' })
+    if (!appData) {
+      const newAppData = new AppData({
+        _id: 'app_data',
+        deliveredNotificationIds: [id]
+      })
+      await newAppData.save()
+    } else {
+      // Update and check result for modified documents, if modified means notification is new
+      const result = await AppData.updateOne(
+        { _id: 'app_data' },
+        { $addToSet: { deliveredNotificationIds: id } }
+      )
+      if (!result.nModified) {
+        console.log('DUPLICATE NOTIFICATION - NOT DELIVERING')
+        return res.status(200).end()
+      }
+    }
+
     // Send telegram message to all the subscribers
     // Get all subscribers from db
     const streamer = await Streamer.findOne({ streamerId: user_id })
     if (streamer) {
       const subscribers = streamer.subscribers
+      //TODO: Map and use Promse.all instead
       subscribers.forEach(subscriber => {
         rateLimitedAxios({
           method: 'GET',

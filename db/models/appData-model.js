@@ -4,7 +4,8 @@ const Schema = mongoose.Schema
 const appDataSchema = new Schema(
   {
     _id: String,
-    appAccessToken: String
+    appAccessToken: String,
+    deliveredNotificationIds: Array
   },
   { collection: 'appData' }
 )

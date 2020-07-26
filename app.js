@@ -71,6 +71,7 @@ const twitch = new Twitch()
 //   .refreshWebhooksSubscriptions()
 //   .then(data => console.log(data))
 //   .catch(error => console.log(error))
+twitch.getWebhookSubscriptions().then(_ => console.log(_))
 
 // Start polling
 bot.launch()
