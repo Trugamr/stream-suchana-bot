@@ -77,10 +77,5 @@ const twitch = new Twitch({
 //   .catch(error => console.log(error))
 // twitch.getWebhookSubscriptions().then(_ => console.log(_))
 
-twitch
-  .multipleUserInfo([23161357, 168934606], { type: 'id' })
-  .then(data => console.log(data))
-  .catch(error => console.log(error))
-
 // Start polling
 bot.launch()
