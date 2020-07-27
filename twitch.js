@@ -171,6 +171,29 @@ class Twitch {
     }
   }
 
+  // Get multiple users info by twitch id or usernames array
+  multipleUserInfo = async (usersArr, options = { type: 'id' }) => {
+    let queryParams = ''
+
+    if (options.type == 'id') {
+      queryParams = usersArr.map(userId => `id=${userId}`).join('&')
+    } else if (options.type == 'login') {
+      queryParams = usersArr.map(userLogin => `login=${userLogin}`).join('&')
+    }
+
+    try {
+      const response = await this.twitch({
+        url: `/users?${queryParams}`,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`
+        }
+      })
+      return response.data.data
+    } catch (error) {
+      throw error
+    }
+  }
+
   // Get streaming info for user
   streamingInfo = async username => {
     try {

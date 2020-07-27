@@ -29,7 +29,7 @@ router.post('/stream/:user_id', async (req, res) => {
   // If no data then streamer went offline
   if (!req.body.data.length)
     return console.log(`${req.params.user_id} WENT OFFLINE`)
-  console.log('[POST] GOT NOTIFIED', req)
+  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name)
   try {
     const {
       id,

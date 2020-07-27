@@ -64,7 +64,9 @@ app.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
 
-const twitch = new Twitch()
+const twitch = new Twitch({
+  accessToken: 'rdmh4mopb78fanq78qm4t2q62nsvag'
+})
 // twitch
 //   .unsubscribeFromAllWebhooks()
 //   .then(data => console.log(data))
@@ -74,6 +76,11 @@ const twitch = new Twitch()
 //   .then(data => console.log(data))
 //   .catch(error => console.log(error))
 // twitch.getWebhookSubscriptions().then(_ => console.log(_))
+
+twitch
+  .multipleUserInfo([23161357, 168934606], { type: 'id' })
+  .then(data => console.log(data))
+  .catch(error => console.log(error))
 
 // Start polling
 bot.launch()
