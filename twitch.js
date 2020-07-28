@@ -12,7 +12,8 @@ const {
   TWITCH_CLIENT_ID,
   TWITCH_CLIENT_SECRET,
   TWITCH_REDIRECT_URI,
-  SITE_URL
+  SITE_URL,
+  SHA256_SECRET
 } = process.env
 
 class Twitch {
@@ -248,7 +249,8 @@ class Twitch {
           'hub.callback': `${SITE_URL}/notifications/stream/${streamerId}`,
           'hub.mode': 'subscribe',
           'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
-          'hub.lease_seconds': 36000
+          'hub.lease_seconds': 36000,
+          'hub.secret': SHA256_SECRET
         }
       })
       return response
@@ -359,7 +361,8 @@ class Twitch {
             'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
             'hub.callback': `${SITE_URL}/notifications/stream/${streamerId} `,
             'hub.mode': 'subscribe',
-            'hub.lease_seconds': 86400
+            'hub.lease_seconds': 86400,
+            'hub.secret': SHA256_SECRET
           }
         })
       })

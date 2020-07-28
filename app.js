@@ -16,6 +16,7 @@ const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 // TODO: Find a way to delete subscription if they have disconnected their twitch
 // TODO: Only subscribe webhook when creating a new streamer entry
 // TODO: Verify notification payloads
+// TODO: Schedule cleaning of delivered notification ID
 
 // Passport setup
 require('./auth/passport-setup')
@@ -23,8 +24,6 @@ require('./auth/passport-setup')
 const app = express()
 
 // Middlewares setup
-// app.use(bodyParser.json())
-app.use(bodyParser.json({ extended: true }))
 app.use(passport.initialize())
 
 // Databse Connection

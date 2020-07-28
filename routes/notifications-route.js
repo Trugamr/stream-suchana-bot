@@ -1,11 +1,13 @@
 const express = require('express')
 const axios = require('axios')
+const crypto = require('crypto')
+const bodyParser = require('body-parser')
 const rateLimit = require('axios-rate-limit')
 const Streamer = require('../db/models/streamer-model')
 const { getHoursMin, addSeprator } = require('../utils')
 const AppData = require('../db/models/appData-model')
 
-const { TELEGRAM_BOT_TOKEN } = process.env
+const { TELEGRAM_BOT_TOKEN, SHA256_SECRET } = process.env
 
 // Max requests sent at a single time 5 after that every request is sent after 200ms
 const rateLimitedAxios = rateLimit(axios.create(), {
@@ -15,10 +17,31 @@ const rateLimitedAxios = rateLimit(axios.create(), {
 
 const router = express.Router()
 
+// Verifying that webhook subsciption request or notification came from twitch
+router.use(
+  bodyParser.json({
+    extended: true,
+    verify: (req, res, buf, encoding) => {
+      // is there a hub to verify against
+      req.twitch_hub = false
+      if (req.headers && req.headers['x-hub-signature']) {
+        req.twitch_hub = true
+
+        let xHub = req.headers['x-hub-signature'].split('=')
+
+        req.twitch_hex = crypto
+          .createHmac(xHub[0], SHA256_SECRET)
+          .update(buf)
+          .digest('hex')
+        req.twitch_signature = xHub[1]
+      }
+    }
+  })
+)
+
 // Gets request from subscribed webhook when stream's state is changed
-// TODO: Verify integrity of notification
 router.get('/stream/:user_id', (req, res) => {
-  console.log('[GET] GOT CHALLENGE')
+  console.log('[GET] GOT CHALLENGE', req)
   // Echo back challenge token in plain text
   res.send(req.query['hub.challenge'])
 })
@@ -26,13 +49,22 @@ router.get('/stream/:user_id', (req, res) => {
 // Twitch send notifications about streamer status on this route
 // Request body is empty for streamer offline notification
 router.post('/stream/:user_id', async (req, res) => {
+  // Acknowledge notification
+  res.status(200).send('OK')
+
+  // Verify if notification came from twitch
+  if (req.twitch_hub && req.twitch_hex == req.twitch_signature) {
+    console.log('VERIFIED NOTIFICATION')
+  } else {
+    return console.log('FAILED TO VERIFY HASH', req)
+  }
+
   // If no data then streamer went offline
   if (!req.body.data.length)
     return console.log(`${req.params.user_id} WENT OFFLINE`)
-  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name)
+  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name, req)
   try {
     const {
-      id,
       started_at,
       thumbnail_url,
       title,
@@ -42,6 +74,7 @@ router.post('/stream/:user_id', async (req, res) => {
       user_name,
       type
     } = req.body['data'][0]
+
     const message = `
 *${user_name} STARTED STREAMING*
 
@@ -62,11 +95,14 @@ Viewers: *${addSeprator(viewer_count.toString())}*
       // Update and check result for modified documents, if modified means notification is new
       const result = await AppData.updateOne(
         { _id: 'app_data' },
-        { $addToSet: { deliveredNotificationIds: id } }
+        {
+          $addToSet: {
+            deliveredNotificationIds: req.headers['twitch-notification-id']
+          }
+        }
       )
       if (!result.nModified) {
         console.log('DUPLICATE NOTIFICATION - NOT DELIVERING')
-        return res.status(200).end()
       }
     }
 
