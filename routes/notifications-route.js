@@ -89,7 +89,8 @@ Viewers: *${addSeprator(viewer_count.toString())}*
     if (!appData) {
       const newAppData = new AppData({
         _id: 'app_data',
-        deliveredNotificationIds: [id]
+        // deliveredNotificationIds: [id]
+        deliveredNotificationIds: req.headers['twitch-notification-id']
       })
       await newAppData.save()
     } else {
@@ -99,13 +100,13 @@ Viewers: *${addSeprator(viewer_count.toString())}*
         { _id: 'app_data' },
         {
           $addToSet: {
-            deliveredNotificationIds: id
-            // deliveredNotificationIds: req.headers['twitch-notification-id']
+            // deliveredNotificationIds: id
+            deliveredNotificationIds: req.headers['twitch-notification-id']
           }
         }
       )
       if (!result.nModified) {
-        console.log('DUPLICATE NOTIFICATION - NOT DELIVERING')
+        return console.log('DUPLICATE NOTIFICATION - NOT DELIVERING')
       }
     }
 
