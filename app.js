@@ -12,10 +12,9 @@ const Twitch = require('./twitch')
 const { MONGO_DB_URL, MONGO_DB_USERNAME, MONGO_DB_PASSWORD, PORT } = process.env
 
 // TODO: Write better replies to user
-// TODO: Get streamers, check if they have any subscribers refresh webhook
+// TODO: Get streamers, check if they have any subscribers then only refresh webhook
 // TODO: Find a way to delete subscription if they have disconnected their twitch
 // TODO: Only subscribe webhook when creating a new streamer entry
-// TODO: Verify notification payloads
 // TODO: Schedule cleaning of delivered notification ID
 
 // Passport setup

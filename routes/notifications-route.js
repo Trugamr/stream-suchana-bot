@@ -62,9 +62,10 @@ router.post('/stream/:user_id', async (req, res) => {
   // If no data then streamer went offline
   if (!req.body.data.length)
     return console.log(`${req.params.user_id} WENT OFFLINE`)
-  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name, req)
+  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name)
   try {
     const {
+      id,
       started_at,
       thumbnail_url,
       title,
@@ -93,11 +94,13 @@ Viewers: *${addSeprator(viewer_count.toString())}*
       await newAppData.save()
     } else {
       // Update and check result for modified documents, if modified means notification is new
+      // Using stream id instead of twitch-notification-id because of duplicate notifications maybe due to webhook refreshes
       const result = await AppData.updateOne(
         { _id: 'app_data' },
         {
           $addToSet: {
-            deliveredNotificationIds: req.headers['twitch-notification-id']
+            deliveredNotificationIds: id
+            // deliveredNotificationIds: req.headers['twitch-notification-id']
           }
         }
       )
