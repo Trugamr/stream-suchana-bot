@@ -20,11 +20,6 @@ exports.subscribeCommand = async (ctx, next) => {
       streamerId: streamerInfo.id
     })
 
-    // Subscribe to webhook
-    const response = await twitch.subscribeToStreamer(streamerInfo.id)
-    if (!response.status == 202)
-      return ctx.reply(`Failed to subscribe to ${streamerInfo.display_name}`)
-
     // Streamer already exists in db, add document id of user along with their telegram chat id
     if (currentStreamer) {
       // Pushing user to streamer in memory and saving to update in db
@@ -54,6 +49,11 @@ exports.subscribeCommand = async (ctx, next) => {
           }
         ]
       })
+
+      // Subscribe to webhook
+      const response = await twitch.subscribeToStreamer(streamerInfo.id)
+      if (!response.status == 202)
+        return ctx.reply(`Failed to subscribe to ${streamerInfo.display_name}`)
 
       await newStreamer.save()
     }

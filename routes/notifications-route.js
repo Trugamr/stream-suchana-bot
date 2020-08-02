@@ -41,7 +41,7 @@ router.use(
 
 // Gets request from subscribed webhook when stream's state is changed
 router.get('/stream/:user_id', (req, res) => {
-  console.log('[GET] GOT CHALLENGE', req)
+  console.log('[GET] GOT CHALLENGE')
   // Echo back challenge token in plain text
   res.send(req.query['hub.challenge'])
 })
@@ -50,7 +50,7 @@ router.get('/stream/:user_id', (req, res) => {
 // Request body is empty for streamer offline notification
 router.post('/stream/:user_id', async (req, res) => {
   // Acknowledge notification
-  res.status(200).send('OK')
+  res.status(200).end()
 
   // Verify if notification came from twitch
   if (req.twitch_hub && req.twitch_hex == req.twitch_signature) {
@@ -62,7 +62,7 @@ router.post('/stream/:user_id', async (req, res) => {
   // If no data then streamer went offline
   if (!req.body.data.length)
     return console.log(`${req.params.user_id} WENT OFFLINE`)
-  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name)
+  console.log('[POST] GOT NOTIFIED', req.body.data[0].user_name, req)
   try {
     const {
       id,
@@ -89,19 +89,20 @@ Viewers: *${addSeprator(viewer_count.toString())}*
     if (!appData) {
       const newAppData = new AppData({
         _id: 'app_data',
-        // deliveredNotificationIds: [id]
-        deliveredNotificationIds: req.headers['twitch-notification-id']
+        deliveredNotificationIds: [id]
+        // deliveredNotificationIds: req.headers['twitch-notification-id']
       })
       await newAppData.save()
     } else {
+      // Maybe unsubscribing from all then resub to webhooks may fix this
       // Update and check result for modified documents, if modified means notification is new
       // Using stream id instead of twitch-notification-id because of duplicate notifications maybe due to webhook refreshes
       const result = await AppData.updateOne(
         { _id: 'app_data' },
         {
           $addToSet: {
-            // deliveredNotificationIds: id
-            deliveredNotificationIds: req.headers['twitch-notification-id']
+            deliveredNotificationIds: id
+            // deliveredNotificationIds: req.headers['twitch-notification-id']
           }
         }
       )
