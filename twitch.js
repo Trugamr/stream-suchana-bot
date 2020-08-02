@@ -226,16 +226,31 @@ class Twitch {
 
   // Get webhook subscriptions
   // TODO: save  token in db, if req fails then only refresh token
-  getWebhookSubscriptions = async () => {
+  // Cursor to get next page of subscriptions
+  getWebhookSubscriptions = async ({ cursor } = {}) => {
+    const webhookSubscriptions = []
     try {
       const response = await this.twitchApp({
         method: 'GET',
-        url: 'https://api.twitch.tv/helix/webhooks/subscriptions'
+        url: 'https://api.twitch.tv/helix/webhooks/subscriptions',
+        params: {
+          first: 100,
+          after: cursor ? cursor : null
+        }
       })
-      return response.data
+      webhookSubscriptions.push(...response.data.data)
+
+      if (response.data.pagination && response.data.pagination.cursor) {
+        const moreSubscriptions = await this.getWebhookSubscriptions({
+          cursor: response.data.pagination.cursor
+        })
+        webhookSubscriptions.push(...moreSubscriptions)
+      }
     } catch (error) {
       throw error
     }
+
+    return webhookSubscriptions
   }
 
   // Subscribe to streamer status using streamer user_id
@@ -298,10 +313,10 @@ class Twitch {
 
   // Unsubscribe from all webhooks
   unsubscribeFromAllWebhooks = async () => {
-    // Max requests sent at a single time 1 after that every request is sent after 1000ms
+    // Max requests sent at a single time 1 after that every request is sent after 200ms
     const rateLimitedAxios = rateLimit(this.twitchApp, {
       maxRequests: 1,
-      perMilliseconds: 1000
+      perMilliseconds: 200
     })
 
     try {
@@ -310,7 +325,7 @@ class Twitch {
 
       // Get all subscriptions
       const subscriptions = await this.getWebhookSubscriptions()
-      const responses = subscriptions.data.map(subscription => {
+      const responses = subscriptions.map(subscription => {
         const { topic, callback, expires_at } = subscription
         return rateLimitedAxios({
           method: 'POST',

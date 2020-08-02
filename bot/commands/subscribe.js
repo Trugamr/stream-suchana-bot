@@ -50,12 +50,20 @@ exports.subscribeCommand = async (ctx, next) => {
         ]
       })
 
+      await newStreamer.save()
+    }
+
+    // Check if currentStreamer had 0 entries
+    // If currentStreamer is null that means its a new streamer
+    // In both cases sub to webhook because streamers with 0 entries dont get webhook refreshed
+    if (
+      currentStreamer == null ||
+      (currentStreamer && currentStreamer.subscribers.length == 0)
+    ) {
       // Subscribe to webhook
       const response = await twitch.subscribeToStreamer(streamerInfo.id)
       if (!response.status == 202)
         return ctx.reply(`Failed to subscribe to ${streamerInfo.display_name}`)
-
-      await newStreamer.save()
     }
 
     ctx.reply(
@@ -67,7 +75,6 @@ exports.subscribeCommand = async (ctx, next) => {
   }
 }
 
-// TODO: When user unsubs if subscribers are empty unsub webhook for streamer also
 exports.unsubscribeCommand = async (ctx, next) => {
   const { accessToken, refreshToken } = ctx.state
   const twitch = new Twitch({ accessToken, refreshToken })
