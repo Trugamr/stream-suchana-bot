@@ -9,6 +9,7 @@ const loginCommand = require('./commands/login')
 const streamingCommand = require('./commands/streaming')
 const { subscribeCommand, unsubscribeCommand } = require('./commands/subscribe')
 const subscriptionsCommand = require('./commands/subscriptions')
+const helpCommand = require('./commands/help')
 const User = require('../db/models/user-model')
 
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN)
@@ -55,5 +56,6 @@ bot.command('streaming', streamingCommand)
 bot.command(['sub', 'subscribe'], subscribeCommand)
 bot.command(['unsub', 'unsubscribe'], unsubscribeCommand)
 bot.command(['subs', 'subscriptions'], subscriptionsCommand)
+bot.command(['help', 'start'], helpCommand)
 
 module.exports = bot
