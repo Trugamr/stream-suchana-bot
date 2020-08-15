@@ -10,8 +10,8 @@ cron.schedule('0 0 */4 * * *', () => {
   })
 })
 
-// Clean delivered notification Ids from database every 12 hours
-cron.schedule('0 0 */12 * * *', async () => {
+// Clean delivered notification Ids from database every 20 hours
+cron.schedule('0 0 */20 * * *', async () => {
   try {
     await AppData.findOneAndUpdate(
       { _id: 'app_data' },

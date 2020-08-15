@@ -1,6 +1,7 @@
 const axios = require('axios').default
 const rateLimit = require('axios-rate-limit')
 const { default: createAuthRefreshInterceptor } = require('axios-auth-refresh')
+const { getWebhookRefreshIds } = require('./utils')
 
 const User = require('./db/models/user-model')
 const Streamer = require('./db/models/streamer-model')
@@ -361,22 +362,19 @@ class Twitch {
       const { access_token } = await this.getAppToken()
       console.log(access_token)
 
-      // Get all streamers from db that have atleast 1 subscriber
-      const streamers = await Streamer.find({
-        // Returns streamers with atlease 1 subscriber
-        'subscribers.0': { $exists: true }
-      })
-      const responses = streamers.map(streamer => {
-        const { streamerId } = streamer
+      const webhooks = await this.getWebhookSubscriptions()
+      const streamerIds = await getWebhookRefreshIds(webhooks)
+
+      const responses = streamerIds.map(id => {
         return rateLimitedAxios({
           method: 'POST',
           url: 'https://api.twitch.tv/helix/webhooks/hub',
           headers: { Authorization: `Bearer ${access_token}` },
           data: {
-            'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${streamerId}`,
-            'hub.callback': `${SITE_URL}/notifications/stream/${streamerId} `,
+            'hub.topic': `https://api.twitch.tv/helix/streams?user_id=${id}`,
+            'hub.callback': `${SITE_URL}/notifications/stream/${id} `,
             'hub.mode': 'subscribe',
-            'hub.lease_seconds': 86400,
+            'hub.lease_seconds': 43200,
             'hub.secret': SHA256_SECRET
           }
         })
@@ -385,7 +383,8 @@ class Twitch {
       await Promise.all(responses)
       return {
         status: 'success',
-        message: 'Refreshed all subscriptions'
+        message: 'Refreshed all subscriptions',
+        refreshIds: streamerIds
       }
     } catch (error) {
       throw error

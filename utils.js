@@ -1,3 +1,7 @@
+const Streamer = require('./db/models/streamer-model')
+const qs = require('querystring')
+const _ = require('lodash')
+
 // Utility Functions
 
 // Split and send args without first argument, useful for commands
@@ -14,7 +18,6 @@ exports.addSeprator = value => {
 
 // Get hours, minutes passed
 // Date in string
-// TODO: fix xhrs 0min, 0hrs Xmin
 exports.getHoursMin = string => {
   const message = []
   const milliseconds = Math.floor((new Date() - new Date(string)) / 1000)
@@ -25,4 +28,47 @@ exports.getHoursMin = string => {
   if (minutes) message.push(`${minutes}${minutes > 1 ? 'mins' : 'min'}`)
   if (hours == 0 && minutes == 0) message.push('few seconds')
   return message.join(' ')
+}
+
+// Return streamer ids to refresh
+exports.getWebhookRefreshIds = async webhooks => {
+  try {
+    webhooks = webhooks.map(webhook => {
+      const { user_id } = qs.parse(webhook.topic.split('?')[1])
+      const secondsToExpire =
+        Math.round(new Date(webhook.expires_at) / 1000) -
+        Math.round(new Date() / 1000)
+
+      return {
+        ...webhook,
+        user_id: parseInt(user_id),
+        expires_in: parseInt(secondsToExpire)
+      }
+    })
+
+    // streamerIds
+    const streamerIds = webhooks.map(webhook => webhook.user_id)
+
+    // Get all streamers from db that have atleast 1 subscriber
+    const streamers = await Streamer.find({
+      // Returns streamers with atlease 1 subscriber
+      'subscribers.0': { $exists: true }
+    })
+
+    const storedStreamerIds = streamers.map(streamer => streamer.streamerId)
+
+    // Webhooks that are expiring in less than 5400 [1hr 30min]
+    const expiringStreamerIds = webhooks
+      .filter(webhook => webhook.expires_in < 5400)
+      .map(webhook => webhook.user_id)
+
+    // streamers in db who don't have a webhook subscription [rare edge case]
+    const missingStreamerIds = _.difference(storedStreamerIds, streamerIds)
+
+    const refreshStreamerIds = [...expiringStreamerIds, ...missingStreamerIds]
+
+    return refreshStreamerIds
+  } catch (err) {
+    throw err
+  }
 }
