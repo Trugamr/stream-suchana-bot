@@ -1,6 +1,6 @@
 const cron = require('node-cron')
 const Twitch = require('./twitch')
-const AppData = require('./db/models/appData-model')
+const { deleteOldNotifications } = require('./utils')
 
 // Running refresh webhook subscriptions job every 4 hours
 cron.schedule('0 0 */4 * * *', () => {
@@ -10,18 +10,12 @@ cron.schedule('0 0 */4 * * *', () => {
   })
 })
 
-// Clean delivered notification Ids from database every 20 hours
-cron.schedule('0 0 */20 * * *', async () => {
+// Clean 24hours old notifications from from database every 1 hours
+cron.schedule('0 0 */2 * * *', async () => {
   try {
-    await AppData.findOneAndUpdate(
-      { _id: 'app_data' },
-      {
-        $set: { deliveredNotificationIds: [] }
-      }
-    )
-
-    console.log(new Date(), 'Deleted old notificaion ids from database.')
-  } catch (error) {
-    console.log(new Date(), 'Failed to delete notification ids from database.')
+    const count = await deleteOldNotifications(24)
+    console.log(new Date(), `DELETED ${count} OBJECTS FROM DATABASE`)
+  } catch (err) {
+    console.log(new Date(), err.message)
   }
 })

@@ -65,6 +65,7 @@ app.listen(port, () => {
 const twitch = new Twitch({
   accessToken: 'rdmh4mopb78fanq78qm4t2q62nsvag'
 })
+
 // twitch
 //   .unsubscribeFromAllWebhooks()
 //   .then(data => console.log(data))

@@ -1,4 +1,5 @@
 const Streamer = require('./db/models/streamer-model')
+const Notification = require('./db/models/notification-model')
 const qs = require('querystring')
 const _ = require('lodash')
 
@@ -70,5 +71,22 @@ exports.getWebhookRefreshIds = async webhooks => {
     return refreshStreamerIds
   } catch (err) {
     throw err
+  }
+}
+
+// Delete notification documents that were created atleast 24hrs ago
+exports.deleteOldNotifications = async (hours = 24) => {
+  let expireDate = new Date()
+  expireDate.setHours(expireDate.getHours() - hours)
+
+  try {
+    const notifications = await Notification.deleteMany({
+      $expr: {
+        $lte: [{ $toDate: '$_id' }, expireDate]
+      }
+    })
+    return notifications.deletedCount
+  } catch (err) {
+    throw new Error(`Failed to delete notifications from db: ${err.message} `)
   }
 }
