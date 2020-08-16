@@ -53,11 +53,11 @@ router.post('/stream/:user_id', async (req, res) => {
   res.status(200).end()
 
   // Verify if notification came from twitch
-  // if (req.twitch_hub && req.twitch_hex == req.twitch_signature) {
-  //   console.log('VERIFIED NOTIFICATION')
-  // } else {
-  //   return console.log('FAILED TO VERIFY HASH', req)
-  // }
+  if (req.twitch_hub && req.twitch_hex == req.twitch_signature) {
+    console.log('VERIFIED NOTIFICATION')
+  } else {
+    return console.log('FAILED TO VERIFY HASH', req)
+  }
 
   // If no data then streamer went offline
   if (!req.body.data.length)
@@ -91,19 +91,34 @@ Viewers: *${addSeprator(viewer_count.toString())}*
     // If found don't deliver notification
     const notificationId = req.headers['twitch-notification-id']
     const notification = await Notification.findOne({
-      id: notificationId
+      notificationId
     })
 
     if (notification) {
       // Return and don't deliver duplicate notification
       return console.log(`DUPLICATE NOTIFICATION ${user_name}`, req)
     } else {
-      // Adding notification to collection
-      const newNotification = new Notification({
-        id: notificationId
-      }).save()
+      // Check if streamId exits in notification collection
+      // If exits stream title, game or viewers changed
+      // But user is already notified about online status
+      const streamNotification = await Notification.findOne({
+        streamId: id
+      })
 
-      console.log(`NEW NOTIFICATION ${user_name}`, req)
+      if (streamNotification) {
+        // Means online status already notified
+        return console.log(
+          `STREAM ONLINE STATUS ALREADY NOTIFIED FOR ${user_name}`
+        )
+      } else {
+        // Adding notification to collection
+        const newNotification = new Notification({
+          notificationId,
+          streamId: id
+        }).save()
+
+        console.log(`NEW NOTIFICATION ${user_name}`, req)
+      }
     }
 
     // Send telegram message to all the subscribers
