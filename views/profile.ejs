@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/index.css" />
+  <title>Authentication - Twitch</title>
+</head>
+
+<body>
+  <div class="container">
+    <%- include('partials/navbar') %>
+    <div class="wrapper">
+      <div class="profile-card">
+        <span class="profile-image-container">
+          <div class="profile-image" style="background-image: url('<%= user.profile_image_url %>');"></div>
+        </span>
+        <a href="https://twitch.tv/<%= user.login %>" target="_blank" class="profile-name">
+          <span>&#x40;<%= user.login %></span>
+        </a>
+      </div>
+      <p class="profile-message">
+        <span>You have successfully authenticated using your twitch account.</span>
+        <span>You can now start using the telegram bot.</span>
+      </p>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,123 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  border: none;
+  width: 100vw;
+  height: 100vh;
+}
+
+:root {
+  --purple-color: #9146ff;
+}
+
+nav {
+  padding: 20px 20px;
+}
+
+nav .logo {
+  font-family: sans-serif;
+  font-size: 22px;
+  color: var(--purple-color);
+}
+
+nav .logo > span {
+  font-weight: bold;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.error-image {
+  width: 170px;
+}
+
+.error-message {
+  font-size: 24px;
+  font-family: sans-serif;
+  color: var(--purple-color);
+  font-weight: bold;
+}
+
+.container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.profile-card {
+  width: 220px;
+  height: 280px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--purple-color);
+  border-radius: 10px;
+}
+
+.profile-image-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 999px;
+}
+
+.profile-name {
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  font-family: sans-serif;
+  cursor: pointer;
+  background-color: #ffffff3a;
+  width: 100%;
+  text-align: center;
+  padding: 18px 10px;
+  box-sizing: border-box;
+  text-decoration: none;
+  transition: ease all 0.2s;
+}
+
+.profile-name:hover {
+  background-color: #ffffff66;
+}
+
+.profile-message {
+  font-weight: bold;
+  font-size: 18px;
+  font-family: sans-serif;
+  color: var(--purple-color);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  padding: 30px;
+  line-height: 26px;
+}
+
+.profile-message span:nth-child(2) {
+  font-size: 16px;
+  font-weight: normal;
+}

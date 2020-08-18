@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/index.css" />
+  <title>Authentication - Twitch</title>
+</head>
+
+<body>
+  <div class="container">
+    <%- include('partials/navbar') %>
+    <div class="wrapper">
+      <div class="error">
+        <img class="error-image" src="/sad-robo.svg" />
+        <span class="error-message">
+          <%= message %>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

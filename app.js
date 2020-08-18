@@ -23,6 +23,8 @@ require('./auth/passport-setup')
 const app = express()
 
 // Middlewares setup
+app.use(express.static('public'))
+app.set('view engine', 'ejs')
 app.use(passport.initialize())
 
 // Databse Connection

@@ -46,14 +46,14 @@ router.get(
         const { session } = currentUser
         // Session Expired
         if (session.expiresAt < currentDate) {
-          return res.json({
+          return res.render('error', {
             success: false,
             message: 'Session expired. Try authenticating again.'
           })
         }
       } else {
         // User with session identifier not found
-        return res.json({
+        return res.render('error', {
           success: false,
           message: 'Invalid session identifier.'
         })
@@ -82,15 +82,18 @@ router.get(
         { new: true }
       )
 
-      res.json({
-        success: true,
-        message: `Twitch authentication success using ${display_name}'s account.`
+      res.render('profile', {
+        user: {
+          profile_image_url,
+          display_name,
+          login
+        }
       })
 
       console.log('AUTENTICATED SUCCESSFULLY', currentUser)
     } catch (error) {
       console.log(error)
-      res.json({
+      res.render('error', {
         success: false,
         message: 'Failed to autenticate using twitch.'
       })
